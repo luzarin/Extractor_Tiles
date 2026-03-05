@@ -1,0 +1,20 @@
+fastapi>=0.116.0
+uvicorn[standard]>=0.31.0
+python-multipart>=0.0.9
+python-dotenv>=1.0.1
+
+numpy>=1.26.0
+opencv-python>=4.10.0.84
+requests>=2.32.3
+tqdm>=4.66.5
+mercantile>=1.2.1
+rasterio>=1.4.0
+geopandas>=1.0.1
+shapely>=2.0.6
+pyproj>=3.7.0
+Pillow>=11.0.0
+
+# Optional but typically needed for apple/jimutmap provider
+selenium>=4.24.0
+chromedriver-autoinstaller>=0.6.4
+undetected-chromedriver>=3.5.5

@@ -1,0 +1,14 @@
+# 1. Entorno virtual de Python
+.venv/
+venv/
+env/
+
+# 2. Archivos de salida y datos temporales
+output/
+data/
+
+# 3. Archivos cacheados por Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd

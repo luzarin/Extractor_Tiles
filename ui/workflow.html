@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Extractor de Tiles</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <style>
+    :root {
+      --bg: #f4f8fb;
+      --card: #ffffff;
+      --ink: #111827;
+      --muted: #4b5563;
+      --line: #d1d5db;
+      --primary: #1a2b6b;
+      --primary-hover: #111d4e;
+      --primary-soft: #dce4f5;
+      --primary-soft-hover: #c3d0ee;
+      --terminal: #1e293b;
+    }
+
+    body {
+      font-family: "Inter", "Segoe UI", Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 50% -200px, #ffffff 5%, var(--bg) 70%);
+      color: var(--ink);
+    }
+
+    .soft-input {
+      border-color: #d1d5db !important;
+      border-radius: 0.5rem !important;
+      background: #fff !important;
+      font-size: 0.95rem !important;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+    }
+
+    .soft-input:focus {
+      border-color: #6366f1 !important;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+    }
+
+    select.soft-input {
+      appearance: none !important;
+      -webkit-appearance: none !important;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") !important;
+      background-repeat: no-repeat !important;
+      background-position: right 0.75rem center !important;
+      padding-right: 2.5rem !important;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="min-h-screen py-10 px-4 sm:px-6">
+    <div class="max-w-4xl mx-auto space-y-7">
+      <section class="text-center">
+        <h1 class="text-5xl tracking-tight font-normal text-slate-900">Extractor de Tiles</h1>
+        <p class="mt-3 text-slate-700 text-xl">Sube un AOI, elige proveedor, descarga y fusiona tiles en un TIFF</p>
+      </section>
+
+      <section class="bg-white border border-slate-200 rounded-2xl shadow-sm p-7 space-y-5">
+        <h2 class="text-2xl font-medium text-slate-900">Area of Interest (AOI)</h2>
+
+        <div>
+          <input id="aoiFiles" type="file" multiple class="hidden" />
+          <div id="dropZone"
+            class="w-full border border-dashed border-slate-300 rounded-xl p-7 text-center text-slate-600 cursor-pointer hover:bg-slate-50 transition-colors">
+            <div class="inline-flex items-center gap-2 text-base">
+              <span id="dropZoneIcon">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                    d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M8 12l4-4m0 0l4 4m-4-4v9" />
+                </svg>
+              </span>
+              <span id="dropZoneLabel">Formato ZIP/GPKG/GeoJSON. Haz clic aquí para seleccionar.</span>
+            </div>
+            <button id="clearFilesBtn" type="button"
+              class="invisible ml-2 inline-flex items-center text-slate-400 hover:text-red-500 transition-colors"
+              title="Limpiar archivos">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                  d="M6 7h12m-1 0l-1 12H8L7 7m3 0V5a1 1 0 011-1h2a1 1 0 011 1v2" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="md:col-span-3">
+            <label class="block text-sm font-medium text-slate-800 mb-1.5">Proveedor</label>
+            <select id="provider" class="soft-input w-full">
+              <option value="apple" selected>Apple Maps Satellite</option>
+              <option value="esri">ESRI World Imagery</option>
+              <option value="google">Google Satellite</option>
+              <option value="custom_xyz">Custom XYZ</option>
+            </select>
+          </div>
+          <div class="md:col-span-1">
+            <label class="block text-sm font-medium text-slate-800 mb-1.5">Zoom (Resolución)</label>
+            <input id="zoom" type="number" min="1" max="20" value="16" class="soft-input w-full" />
+          </div>
+        </div>
+
+        <div id="tileTemplateWrap" class="hidden">
+          <label class="block text-sm font-medium text-slate-800 mb-1.5">Plantilla URL de tile (XYZ)</label>
+          <input id="tileUrlTemplate" type="text" value="" class="soft-input w-full" />
+          <p class="text-xs text-slate-500 mt-1">Usa placeholders: <code>{z}</code>, <code>{x}</code>, <code>{y}</code>
+          </p>
+        </div>
+
+        <div id="appleKeyWrap">
+          <label class="block text-sm font-medium text-slate-800 mb-1.5">Access key (expira en 15 minutos)</label>
+          <input id="appleKey" type="text" value="" class="soft-input w-full" placeholder="Request URL" />
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-800 mb-1.5">Threads (N° de descargas paralelas)</label>
+            <input id="threads" type="number" min="1" max="128" value="20" class="soft-input w-full" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-800 mb-1.5">Versión tiles (Apple)</label>
+            <input id="jimutV" type="number" min="1" value="10221" class="soft-input w-full" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-800 mb-1.5">Límite de tiles</label>
+            <input id="maxTiles" type="number" min="0" value="100000" class="soft-input w-full" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-800 mb-1.5">Output TIFF</label>
+          <input id="outputTif" type="text" value="output/aoi_tiles.tif" class="soft-input w-full" />
+        </div>
+
+        <div class="flex items-center gap-3 pt-1">
+          <button id="btnStart"
+            class="px-5 py-2.5 rounded-lg bg-[var(--primary)] text-white text-sm font-medium hover:bg-[var(--primary-hover)] transition-colors shadow-sm">
+            Descargar
+          </button>
+          <button id="btnCancel"
+            class="px-5 py-2.5 rounded-lg bg-[var(--primary-soft)] text-[#1a2b6b] text-sm font-medium hover:bg-[var(--primary-soft-hover)] transition-colors disabled:opacity-50"
+            disabled>
+            Cancelar
+          </button>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex justify-between text-sm font-medium text-slate-800">
+            <span id="progressLabel">Progreso</span>
+            <span id="progressText">0%</span>
+          </div>
+          <div class="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
+            <div id="progressBar"
+              class="h-2.5 w-0 rounded-full transition-all duration-500 bg-gradient-to-r from-[#1a2b6b] to-[#4a7ab5]">
+            </div>
+          </div>
+          <div id="statusBox" class="flex flex-wrap gap-2 pt-1"></div>
+        </div>
+
+        <div class="border-t border-slate-200 pt-4">
+          <div class="bg-[var(--terminal)] rounded-lg p-4">
+            <pre id="logs"
+              class="text-[#a7f3d0] text-xs font-mono whitespace-pre-wrap break-all h-20 overflow-y-auto"></pre>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const apiBase = window.location.origin;
+    const providerDefaults = {
+      apple: "",
+      esri: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      google: "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+      custom_xyz: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    };
+
+    const el = {
+      aoiFiles: document.getElementById("aoiFiles"),
+      dropZoneLabel: document.getElementById("dropZoneLabel"),
+      dropZoneIcon: document.getElementById("dropZoneIcon"),
+      clearFilesBtn: document.getElementById("clearFilesBtn"),
+      dropZone: document.getElementById("dropZone"),
+      provider: document.getElementById("provider"),
+      zoom: document.getElementById("zoom"),
+      tileTemplateWrap: document.getElementById("tileTemplateWrap"),
+      tileUrlTemplate: document.getElementById("tileUrlTemplate"),
+      appleKeyWrap: document.getElementById("appleKeyWrap"),
+      appleKey: document.getElementById("appleKey"),
+      threads: document.getElementById("threads"),
+      jimutV: document.getElementById("jimutV"),
+      maxTiles: document.getElementById("maxTiles"),
+      outputTif: document.getElementById("outputTif"),
+      btnStart: document.getElementById("btnStart"),
+      btnCancel: document.getElementById("btnCancel"),
+      statusBox: document.getElementById("statusBox"),
+      progressLabel: document.getElementById("progressLabel"),
+      progressText: document.getElementById("progressText"),
+      progressBar: document.getElementById("progressBar"),
+      logs: document.getElementById("logs"),
+    };
+
+    const state = { jobId: null, pollHandle: null, running: false };
+
+    const statusEs = {
+      idle: "inactivo",
+      queued: "en cola",
+      running: "ejecutando",
+      completed: "completado",
+      failed: "fallido",
+      cancelled: "cancelado",
+    };
+    const stageEs = {
+      queued: "en cola",
+      downloading_tiles: "descargando tiles",
+      completed: "completado",
+      failed: "fallido",
+      cancelling: "cancelando",
+      cancelled: "cancelado",
+    };
+
+    function pillClass(status) {
+      if (status === "completed") return "border-emerald-300 bg-emerald-100 text-emerald-800";
+      if (status === "failed") return "border-red-300 bg-red-100 text-red-700";
+      if (status === "cancelled") return "border-amber-300 bg-amber-100 text-amber-700";
+      if (status === "running") return "border-blue-300 bg-blue-100 text-blue-700";
+      return "border-slate-300 bg-slate-50 text-slate-700";
+    }
+
+    function setStatus(status, stage, error) {
+      el.statusBox.innerHTML = "";
+      const s = document.createElement("span");
+      s.className = `inline-flex rounded-md border px-2.5 py-1 text-xs font-medium ${pillClass(status)}`;
+      s.textContent = `estado: ${statusEs[status] || status}`;
+      el.statusBox.appendChild(s);
+      if (error) {
+        const e = document.createElement("span");
+        e.className = "inline-flex rounded-md border px-2.5 py-1 text-xs font-medium border-red-300 bg-red-100 text-red-700";
+        e.textContent = error;
+        el.statusBox.appendChild(e);
+      }
+    }
+
+    function setProgress(pct) {
+      const n = Math.max(0, Math.min(100, Number(pct || 0)));
+      const txt = `${Math.round(n)}%`;
+      el.progressText.textContent = txt;
+      el.progressBar.style.width = `${n}%`;
+    }
+
+    function renderLogs(lines) {
+      el.logs.textContent = (lines || []).join("\n");
+      el.logs.scrollTop = el.logs.scrollHeight;
+    }
+
+    function parseTqdm(logs) {
+      if (!Array.isArray(logs)) return null;
+      for (let i = logs.length - 1; i >= 0; i -= 1) {
+        const m = String(logs[i]).match(/Downloading Tiles:\s+(\d+)%/i);
+        if (m) return Number(m[1]);
+      }
+      return null;
+    }
+
+    function estimateProgress(job) {
+      if (!job) return 0;
+      if (job.status === "completed" || job.status === "failed" || job.status === "cancelled") return 100;
+      if (job.stage === "cancelling") return 95;
+      const tqdm = parseTqdm(job.logs);
+      if (tqdm !== null) return Math.min(95, Math.max(5, tqdm));
+      if (job.stage === "downloading_tiles") return 35;
+      return 5;
+    }
+
+    function syncProviderUi() {
+      const provider = el.provider.value;
+      const isApple = provider === "apple";
+      const isCustom = provider === "custom_xyz";
+
+      el.appleKeyWrap.classList.toggle("hidden", !isApple);
+      el.tileTemplateWrap.classList.toggle("hidden", !(isCustom || provider === "esri" || provider === "google"));
+
+      el.jimutV.value = isApple ? "10221" : "";
+
+      if (provider === "esri" || provider === "google") {
+        el.tileUrlTemplate.value = providerDefaults[provider];
+        el.tileUrlTemplate.readOnly = true;
+      } else if (isCustom) {
+        if (!el.tileUrlTemplate.value.trim()) {
+          el.tileUrlTemplate.value = providerDefaults.custom_xyz;
+        }
+        el.tileUrlTemplate.readOnly = false;
+      } else {
+        el.tileUrlTemplate.value = "";
+        el.tileUrlTemplate.readOnly = false;
+      }
+    }
+
+    function updateButtons() {
+      el.btnStart.disabled = state.running;
+      el.btnCancel.disabled = !state.running || !state.jobId;
+    }
+
+    const defaultDropText = "Formato ZIP/GPKG/GeoJSON. Haz clic aquí para seleccionar.";
+    const defaultOutputTif = "output/aoi_tiles.tif";
+    const uploadIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M8 12l4-4m0 0l4 4m-4-4v9" /></svg>`;
+    const fileIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 7h10l2 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2z" /></svg>`;
+
+    function syncFileLabel() {
+      const names = Array.from(el.aoiFiles.files || []).map((f) => f.name);
+      if (names.length) {
+        el.dropZoneLabel.textContent = names.join(", ");
+        el.dropZoneIcon.innerHTML = fileIcon;
+        el.dropZone.classList.add("border-emerald-300", "bg-emerald-50/40");
+        el.dropZone.classList.remove("border-slate-300");
+        const baseName = names[0].replace(/\.[^.]+$/, "");
+        el.outputTif.value = `output/${baseName}_tiles.tif`;
+      } else {
+        el.dropZoneLabel.textContent = defaultDropText;
+        el.dropZoneIcon.innerHTML = uploadIcon;
+        el.dropZone.classList.remove("border-emerald-300", "bg-emerald-50/40");
+        el.dropZone.classList.add("border-slate-300");
+        el.outputTif.value = defaultOutputTif;
+      }
+      el.clearFilesBtn.classList.toggle("invisible", names.length === 0);
+    }
+
+    function clearFiles() {
+      el.aoiFiles.value = "";
+      syncFileLabel();
+    }
+
+    function setFilesFromDrop(files) {
+      const dt = new DataTransfer();
+      for (const f of files) dt.items.add(f);
+      el.aoiFiles.files = dt.files;
+      syncFileLabel();
+    }
+
+    function stopPolling() {
+      if (state.pollHandle) {
+        clearInterval(state.pollHandle);
+        state.pollHandle = null;
+      }
+    }
+
+    async function fetchJob(jobId) {
+      const res = await fetch(`${apiBase}/tiles/jobs/${jobId}`);
+      if (!res.ok) throw new Error(`Error consultando job: HTTP ${res.status}`);
+      return res.json();
+    }
+
+    function startPolling(jobId) {
+      stopPolling();
+      state.pollHandle = setInterval(async () => {
+        try {
+          const job = await fetchJob(jobId);
+          setStatus(job.status, job.stage, job.error);
+          setProgress(estimateProgress(job));
+          renderLogs(job.logs);
+          if (job.status === "completed" || job.status === "failed" || job.status === "cancelled") {
+            stopPolling();
+            state.running = false;
+            state.jobId = null;
+            updateButtons();
+          }
+        } catch (err) {
+          stopPolling();
+          state.running = false;
+          state.jobId = null;
+          updateButtons();
+          setStatus("failed", "failed", String(err));
+        }
+      }, 1200);
+    }
+
+    el.dropZone.addEventListener("click", (ev) => {
+      if (ev.target.closest("#clearFilesBtn")) return;
+      el.aoiFiles.click();
+    });
+    el.clearFilesBtn.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      clearFiles();
+    });
+    el.dropZone.addEventListener("dragover", (ev) => {
+      ev.preventDefault();
+      el.dropZone.classList.add("bg-slate-50", "border-indigo-400");
+    });
+    el.dropZone.addEventListener("dragleave", () => {
+      el.dropZone.classList.remove("bg-slate-50", "border-indigo-400");
+    });
+    el.dropZone.addEventListener("drop", (ev) => {
+      ev.preventDefault();
+      el.dropZone.classList.remove("bg-slate-50", "border-indigo-400");
+      if (ev.dataTransfer?.files?.length) {
+        setFilesFromDrop(ev.dataTransfer.files);
+      }
+    });
+
+    el.aoiFiles.addEventListener("change", syncFileLabel);
+
+    el.provider.addEventListener("change", syncProviderUi);
+
+    el.btnStart.addEventListener("click", async () => {
+      if (!el.aoiFiles.files || el.aoiFiles.files.length === 0) {
+        alert("Primero selecciona archivos AOI.");
+        return;
+      }
+
+      state.running = true;
+      updateButtons();
+      setStatus("running", "queued", "");
+      setProgress(2);
+      renderLogs(["[INFO] Iniciando job de descarga de tiles..."]);
+
+      const fd = new FormData();
+      for (const f of el.aoiFiles.files) fd.append("aoi_files", f, f.name);
+      fd.append("provider", el.provider.value);
+      fd.append("zoom", String(el.zoom.value || 18));
+      fd.append("tile_url_template", el.tileUrlTemplate.value || "");
+      fd.append("output_tif", el.outputTif.value || "data/aoi_tiles.tif");
+      fd.append("jimutmap_threads", String(el.threads.value || 20));
+      fd.append("jimutmap_v", String(el.jimutV.value || 10221));
+      fd.append("max_tiles", String(el.maxTiles.value || 50000));
+      fd.append("jimutmap_access_key", el.appleKey.value || "");
+
+      try {
+        const res = await fetch(`${apiBase}/tiles/start`, { method: "POST", body: fd });
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(txt || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        state.jobId = data.job_id;
+        startPolling(state.jobId);
+      } catch (err) {
+        state.running = false;
+        state.jobId = null;
+        updateButtons();
+        setStatus("failed", "failed", String(err));
+        setProgress(100);
+      }
+    });
+
+    el.btnCancel.addEventListener("click", async () => {
+      if (!state.jobId) return;
+      try {
+        const res = await fetch(`${apiBase}/tiles/jobs/${state.jobId}/cancel`, { method: "POST" });
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(txt || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        el.logs.textContent += `\n[INFO] ${data.message || "Cancelación solicitada."}`;
+        el.logs.scrollTop = el.logs.scrollHeight;
+        setStatus("running", "cancelling", "");
+      } catch (err) {
+        setStatus("failed", "failed", String(err));
+      }
+    });
+
+    syncProviderUi();
+    syncFileLabel();
+    updateButtons();
+    setStatus("idle", "-", "");
+    setProgress(0);
+    renderLogs(["[INFO] UI de descarga de tiles lista."]);
+  </script>
+</body>
+
+</html>
