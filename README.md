@@ -24,7 +24,7 @@ Se recomienda el uso de **`uv`** para instalar una versión específica de Pytho
 # 1. Instalar uv
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
-# 2. Instalar la versión de Python
+# 2. Instalar versión de Python
 uv python install 3.13.11
 
 # 3. Clonar el repositorio
@@ -35,7 +35,7 @@ cd Extractor_Tiles
 uv venv --python 3.13.11 .venv
 .\.venv\Scripts\Activate.ps1
 
-# 5. Instalar dependencias usando uv
+# 5. Instalar dependencias
 uv pip install -r requirements.txt
 ```
 ### Proveedor Apple (opcional)
