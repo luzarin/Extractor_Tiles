@@ -22,18 +22,18 @@ Herramienta web para descargar tiles satelitales a partir de un AOI y fusionarlo
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/luzarin/Extractor-Tiles.git
-cd tiles_downloader
+git clone https://github.com/luzarin/Extractor_Tiles.git
+cd Extractor_Tiles
 
-# 2. Instalar y configurar una versión de Python con pyenv
+# 2. Instalar y configurar versión de Python
 pyenv install 3.13.11
 pyenv local 3.13.11
 
-# 3. Crear y activar el entorno virtual
+# 3. Crear y activar entorno virtual
 python -m venv .venv
 source .venv/bin/activate
 
-# 4. Instalar dependencias base
+# 4. Instalar dependencias
 pip install -U pip setuptools wheel
 pip install -r requirements.txt
 ```

@@ -21,21 +21,21 @@ Herramienta web para descargar tiles satelitales a partir de un AOI y fusionarlo
 Se recomienda el uso de **`uv`** para instalar una versión específica de Python.
 
 ```powershell
-# 1. Instalar uv (si no lo tienes)
+# 1. Instalar uv
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
-# 2. Instalar la versión exacta de Python
+# 2. Instalar la versión de Python
 uv python install 3.13.11
 
 # 3. Clonar el repositorio
-git clone https://github.com/luzarin/Extractor-Tiles.git
-cd Extractor-Tiles # o `cd tiles_downloader` según el nombre de tu carpeta
+git clone https://github.com/luzarin/Extractor_Tiles.git
+cd Extractor_Tiles
 
-# 4. Crear entorno virtual usando esa versión de Python
+# 4. Crear y activar entorno virtual
 uv venv --python 3.13.11 .venv
 .\.venv\Scripts\Activate.ps1
 
-# 5. Instalar dependencias usando uv (es mucho más rápido que pip)
+# 5. Instalar dependencias usando uv
 uv pip install -r requirements.txt
 ```
 ### Proveedor Apple (opcional)
