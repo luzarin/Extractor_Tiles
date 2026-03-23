@@ -82,12 +82,24 @@ extractor_tiles/
 
 ## API
 
-| Método | Endpoint | Descripción |
-|---|---|---|
-| `GET` | `/` | Sirve la UI |
-| `GET` | `/health` | Health check |
-| `POST` | `/tiles/start` | Inicia un job de descarga |
-| `GET` | `/tiles/jobs` | Lista todos los jobs |
-| `GET` | `/tiles/jobs/{job_id}` | Estado de un job |
-| `GET` | `/tiles/jobs/{job_id}/logs` | Logs de un job |
-| `POST` | `/tiles/jobs/{job_id}/cancel` | Cancela un job |
+Base path actual: `/api/v1`
+Compatibilidad: `/api/v0` (legacy).
+
+Documentacion OpenAPI:
+- `GET /openapi.json` (schema OpenAPI 3.1)
+- `GET /docs` (Swagger UI)
+
+| Metodo | Endpoint | Status | Descripcion |
+|---|---|---|---|
+| `GET` | `/` | `200` | Sirve la UI (fuera del schema OpenAPI) |
+| `GET` | `/api/v1/health` | `200` | Health check |
+| `POST` | `/api/v1/tiles/start` | `202`, `400`, `422` | Inicia un job asincrono y devuelve `job_id` |
+| `GET` | `/api/v1/tiles/jobs` | `200` | Lista jobs |
+| `GET` | `/api/v1/tiles/jobs/{job_id}` | `200`, `404`, `422` | Estado completo de un job |
+| `GET` | `/api/v1/tiles/jobs/{job_id}/logs` | `200`, `404`, `422` | Logs de un job |
+| `POST` | `/api/v1/tiles/jobs/{job_id}/cancel` | `200`, `404`, `422` | Solicita cancelacion |
+
+Notas:
+- `job_id` usa formato UUID.
+- `provider` en `/api/v1/tiles/start`: `apple | esri | google | custom_xyz`.
+- Los mismos endpoints tambien responden bajo `/api/v0/...` para compatibilidad.
