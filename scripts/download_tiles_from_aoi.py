@@ -229,7 +229,7 @@ def build_mosaic_from_tiles(
             print(f"[WARN] Tile download failed {tile.z}/{tile.x}/{tile.y}: {exc}")
 
         if idx % 50 == 0 or idx == total:
-            print(f"[INFO] Downloaded {downloaded}/{idx} processed tiles ({total} total)")
+            print(f"[INFO] Downloaded {downloaded}/{total} processed tiles ({total} total)")
 
     if downloaded == 0:
         raise RuntimeError("No tile could be downloaded. Check tile URL template and connectivity.")

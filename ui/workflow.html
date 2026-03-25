@@ -288,6 +288,21 @@
       return trimmed;
     }
 
+    function parseTileDownloadPct(logs) {
+      if (!Array.isArray(logs)) return null;
+      const rx = /Downloaded\s+(\d+)\/(\d+)\s+processed tiles(?:\s+\((\d+)\s+total\))?/i;
+      for (let i = logs.length - 1; i >= 0; i -= 1) {
+        const line = String(logs[i]);
+        const match = line.match(rx);
+        if (!match) continue;
+        const downloaded = Number(match[1]);
+        const denominator = Number(match[3] || match[2]);
+        if (!Number.isFinite(downloaded) || !Number.isFinite(denominator) || denominator <= 0) continue;
+        const ratio = Math.min(downloaded, denominator) / denominator;
+        return Math.round(ratio * 100);
+      }
+      return null;
+    }
     function parseTqdm(logs) {
       if (!Array.isArray(logs)) return null;
       for (let i = logs.length - 1; i >= 0; i -= 1) {
@@ -305,8 +320,12 @@
       if (!job) return 0;
       if (job.status === "completed" || job.status === "failed" || job.status === "cancelled") return 100;
       if (job.stage === "cancelling") return 95;
+
+      const downloadedPct = parseTileDownloadPct(job.logs);
+      if (downloadedPct !== null) return Math.min(98, Math.max(5, downloadedPct));
+
       const tqdm = parseTqdm(job.logs);
-      if (tqdm !== null) return Math.min(95, Math.max(5, tqdm));
+      if (tqdm !== null) return Math.min(98, Math.max(5, tqdm));
       if (job.stage === "downloading_tiles") return 8;
       return 5;
     }
